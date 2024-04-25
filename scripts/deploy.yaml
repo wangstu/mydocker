@@ -30,7 +30,7 @@ spec:
     - -c
     - tail -f /dev/null
     image: wchstu/mydocker:test
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     name: main
     securityContext:
       privileged: true
