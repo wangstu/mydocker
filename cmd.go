@@ -26,9 +26,8 @@ var runCmd = cli.Command{
 		if len(ctx.Args()) < 1 {
 			return fmt.Errorf("missing container container command")
 		}
-		cmd := ctx.Args().Get(0)
 		tty := ctx.Bool("it")
-		Run(tty, cmd)
+		Run(tty, ctx.Args())
 		return nil
 	},
 }
@@ -41,6 +40,6 @@ var initCmd = cli.Command{
 		log.Infof("init command")
 		cmd := ctx.Args().Get(0)
 		log.Infof("command: %s", cmd)
-		return container.RunContainerInitProcess(cmd, nil)
+		return container.RunContainerInitProcess()
 	},
 }
