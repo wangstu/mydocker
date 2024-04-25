@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mydocker
+  namespace: dev
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: nfs-share
+  volumeMode: Filesystem
+status:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 5Gi
+  phase: Bound
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mydocker
+  namespace: dev
+spec:
+  containers:
+  - command:
+    - sh
+    - -c
+    - tail -f /dev/null
+    image: wchstu/mydocker:test
+    imagePullPolicy: IfNotPresent
+    name: main
+    securityContext:
+      privileged: true
+    resources:
+      limits:
+        cpu: "1"
+        ephemeral-storage: 20Gi
+        memory: 2Gi
+      requests:
+        cpu: "1"
+        ephemeral-storage: 20Gi
+        memory: 2Gi
+    volumeMounts:
+    - mountPath: /mydocker
+      name: mydocker
+      subPath: mydocker
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: mydocker
+    persistentVolumeClaim:
+      claimName: mydocker
