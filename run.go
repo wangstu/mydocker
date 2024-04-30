@@ -28,6 +28,7 @@ func Run(tty bool, cmds []string, res *subsystems.ResourceConfig) {
 
 	sendInitCommands(writePipe, cmds)
 	_ = parent.Wait()
+	container.DeleteWorkSpace("/home")
 }
 
 func sendInitCommands(writePipe *os.File, cmds []string) {
