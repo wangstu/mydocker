@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -15,12 +16,13 @@ import (
 const pipeIndex = 3
 
 func RunContainerInitProcess() error {
-	mountProc()
-
 	cmds := readUserCmds()
 	if len(cmds) == 0 {
 		return errors.New("run container: get user commands error: cmds is nil")
 	}
+
+	setUpMount()
+
 	path, err := exec.LookPath(cmds[0])
 	if err != nil {
 		return fmt.Errorf("get path of [%s] error: %w", cmds[0], err)
@@ -65,4 +67,65 @@ func readUserCmds() []string {
 	}
 	msgStr := string(msg)
 	return strings.Split(msgStr, " ")
+}
+
+func setUpMount() {
+	pwd, err := os.Getwd()
+	if err != nil {
+		logrus.Errorf("get current location error: %v", err)
+		return
+	}
+	logrus.Infof("current location is %s", pwd)
+
+	// systemd 加入linux之后, mount namespace 就变成 shared by default, 所以你必须显示声明你要这个新的mount namespace独立。
+	// 如果不先做 private mount，会导致挂载事件外泄，后续执行 pivotRoot 会出现 invalid argument 错误
+	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
+	if err = pivotRoot(pwd); err != nil {
+		logrus.Errorf("pivotRoot error: %v", err)
+		return
+	}
+
+	// mount /proc
+	defaultMountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
+	_ = syscall.Mount("proc", "/proc", "proc", uintptr(defaultMountFlags), "")
+
+	// 由于前面 pivotRoot 切换了 rootfs，因此这里重新 mount 一下 /dev 目录
+	// tmpfs 是基于 件系 使用 RAM、swap 分区来存储。
+	// 不挂载 /dev，会导致容器内部无法访问和使用许多设备，这可能导致系统无法正常工作
+	syscall.Mount("tmpfs", "/dev", "tmpfs", syscall.MS_NOSUID|syscall.MS_STRICTATIME, "mode=755")
+}
+
+func pivotRoot(root string) error {
+	/**
+	  NOTE：PivotRoot调用有限制，newRoot和oldRoot不能在同一个文件系统下。
+	  因此，为了使当前root的老root和新root不在同一个文件系统下，这里把root重新mount了一次。
+	  bind mount是把相同的内容换了一个挂载点的挂载方法
+	*/
+	if err := syscall.Mount(root, root, "bind", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
+		return fmt.Errorf("mount rootfs to itself error: %w", err)
+	}
+
+	// 创建 rootfs/.pivot_root 目录用于存储 old_root
+	pivotDir := filepath.Join(root, ".pivot_root")
+	if err := os.Mkdir(pivotDir, 0777); err != nil {
+		return err
+	}
+
+	// 执行 pivot_root 调用，将系统 rootfs 切换到新的 rootfs
+	// PivotRoot 调用会把 old_root 挂载到 pivotDir,也就是 rootfs/.pivot_root，挂载点现在依然可以在mount命令中看到
+	if err := syscall.PivotRoot(root, pivotDir); err != nil {
+		return fmt.Errorf("pivotRoot error: %w, new_root: %v, old_put: %v", err, root, pivotDir)
+	}
+	// 修改当前的工作目录到根目录
+	if err := syscall.Chdir("/"); err != nil {
+		return fmt.Errorf("chdir to / error: %w", err)
+	}
+
+	// 最后再把old_root umount了，即 umount rootfs/.pivot_root
+	// 由于当前已经是在 rootfs 下了，就不能再用上面的rootfs/.pivot_root这个路径了,现在直接用/.pivot_root这个路径即可
+	pivotDir = filepath.Join("/", ".pivot_root")
+	if err := syscall.Unmount(pivotDir, syscall.MNT_DETACH); err != nil {
+		return fmt.Errorf("unmount pivot_root error: %w", err)
+	}
+	return os.Remove(pivotDir)
 }
