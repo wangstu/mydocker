@@ -22,6 +22,8 @@ func NewParentProcess(tty bool) (*exec.Cmd, *os.File) {
 		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS | syscall.CLONE_NEWNET | syscall.CLONE_NEWIPC,
 	}
 	cmd.ExtraFiles = []*os.File{readPipe}
+	// 指定 cmd 的工作目录为我们前面准备好的用于存放busybox rootfs的目录
+    cmd.Dir = "/home/busybox"
 	if tty {
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout

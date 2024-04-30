@@ -23,7 +23,7 @@ func main() {
 
 	app.Before = func(ctx *cli.Context) error {
 		// Log as JSON instead of the default ASCII formatter
-		logrus.SetFormatter(&log.JSONFormatter{})
+		logrus.SetFormatter(&logrus.JSONFormatter{})
 		logrus.SetOutput(os.Stdout)
 		return nil
 	}
