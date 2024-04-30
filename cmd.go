@@ -3,17 +3,32 @@ package main
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+
+	"github.com/wangstu/mydocker/cgroups/subsystems"
 	"github.com/wangstu/mydocker/container"
 )
 
 var runCmd = cli.Command{
-	Name: "run",
+	Name:  "run",
+	Usage: `Create a container with namespace and cgrups limit.`,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "it",
 			Usage: "enable tty",
+		},
+		cli.StringFlag{
+			Name:  "mem",
+			Usage: "memory limit. eg: --mem 100m",
+		},
+		cli.StringFlag{
+			Name:  "cpu",
+			Usage: "cpu quota. eg: --cpu 100",
+		},
+		cli.StringFlag{
+			Name:  "cpuset",
+			Usage: "cpuset limit. eg: --cpuset 2,4",
 		},
 	},
 
@@ -27,7 +42,12 @@ var runCmd = cli.Command{
 			return fmt.Errorf("missing container container command")
 		}
 		tty := ctx.Bool("it")
-		Run(tty, ctx.Args())
+		resourceConf := &subsystems.ResourceConfig{
+			MemoryLimit: ctx.String("mem"),
+			CpuSet:      ctx.String("cpuset"),
+			CpuCfsQuota: ctx.Int("cpu"),
+		}
+		Run(tty, ctx.Args(), resourceConf)
 		return nil
 	},
 }
@@ -37,9 +57,9 @@ var initCmd = cli.Command{
 	Usage: "Init container process run user's process in container. Do not call it outside.",
 
 	Action: func(ctx *cli.Context) error {
-		log.Infof("init command")
+		logrus.Infof("init command")
 		cmd := ctx.Args().Get(0)
-		log.Infof("command: %s", cmd)
+		logrus.Infof("command: %s", cmd)
 		return container.RunContainerInitProcess()
 	},
 }
