@@ -5,13 +5,14 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+
 	"github.com/wangstu/mydocker/cgroups"
 	"github.com/wangstu/mydocker/cgroups/subsystems"
 	"github.com/wangstu/mydocker/container"
 )
 
-func Run(tty bool, cmds []string, res *subsystems.ResourceConfig) {
-	parent, writePipe := container.NewParentProcess(tty)
+func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume string) {
+	parent, writePipe := container.NewParentProcess(tty, volume)
 	if parent == nil {
 		logrus.Errorf("New Parent process error")
 		return
@@ -28,7 +29,7 @@ func Run(tty bool, cmds []string, res *subsystems.ResourceConfig) {
 
 	sendInitCommands(writePipe, cmds)
 	_ = parent.Wait()
-	container.DeleteWorkSpace("/home")
+	container.DeleteWorkSpace("/home", volume)
 }
 
 func sendInitCommands(writePipe *os.File, cmds []string) {
