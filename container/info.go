@@ -87,3 +87,7 @@ func randStringBytes(n int) string {
 	}
 	return string(b)
 }
+
+func GetLogFileName(containerId string) string {
+	return containerId + "-json.log"
+}
