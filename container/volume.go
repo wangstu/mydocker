@@ -30,7 +30,9 @@ func mountVolume(mntPath, hostPath, containerPath string) {
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		logrus.Errorf("mount volume error: %v", err)
+		return
 	}
+	logrus.Infof("mount %s to %s successfully", hostPath, containerPathInHost)
 }
 
 func umountVolume(mntPath, containerPath string) {
@@ -40,7 +42,9 @@ func umountVolume(mntPath, containerPath string) {
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		logrus.Errorf("umount volume error: %v", err)
+		return
 	}
+	logrus.Infof("umount %s successfully", containerPathInHost)
 }
 
 func extractVolume(volume string) (hostPath, containerPath string, err error) {
