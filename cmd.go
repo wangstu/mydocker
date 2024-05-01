@@ -30,6 +30,10 @@ var runCmd = cli.Command{
 			Name:  "cpuset",
 			Usage: "cpuset limit. eg: --cpuset 2,4",
 		},
+		cli.StringFlag{
+			Name: "v",
+			Usage: "volume. eg: -v /etc/conf:/etc/conf",
+		},
 	},
 
 	/*
@@ -47,7 +51,8 @@ var runCmd = cli.Command{
 			CpuSet:      ctx.String("cpuset"),
 			CpuCfsQuota: ctx.Int("cpu"),
 		}
-		Run(tty, ctx.Args(), resourceConf)
+		volume := ctx.String("v")
+		Run(tty, ctx.Args(), resourceConf, volume)
 		return nil
 	},
 }
