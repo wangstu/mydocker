@@ -19,6 +19,7 @@ func main() {
 	app.Commands = []cli.Command{
 		initCmd,
 		runCmd,
+		commitCmd,
 	}
 
 	app.Before = func(ctx *cli.Context) error {
@@ -29,6 +30,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logrus.Fatal(err) 
+		logrus.Fatal(err)
 	}
 }
