@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/wangstu/mydocker/cgroups/subsystems"
+	"github.com/wangstu/mydocker/cmds"
 	"github.com/wangstu/mydocker/container"
 )
 
@@ -14,6 +15,10 @@ var runCmd = cli.Command{
 	Name:  "run",
 	Usage: `Create a container with namespace and cgrups limit.`,
 	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "name",
+			Usage: "container name",
+		},
 		cli.BoolFlag{
 			Name:  "it",
 			Usage: "enable tty",
@@ -35,7 +40,7 @@ var runCmd = cli.Command{
 			Usage: "volume. eg: -v /etc/conf:/etc/conf",
 		},
 		cli.BoolFlag{
-			Name: "d",
+			Name:  "d",
 			Usage: "detach container",
 		},
 	},
@@ -49,7 +54,7 @@ var runCmd = cli.Command{
 		if len(ctx.Args()) < 1 {
 			return fmt.Errorf("missing container container command")
 		}
-		
+
 		tty := ctx.Bool("it")
 		detach := ctx.Bool("d")
 		if tty && detach {
@@ -62,7 +67,8 @@ var runCmd = cli.Command{
 			CpuCfsQuota: ctx.Int("cpu"),
 		}
 		volume := ctx.String("v")
-		Run(tty, ctx.Args(), resourceConf, volume)
+		containerName := ctx.String("name")
+		cmds.Run(tty, ctx.Args(), resourceConf, volume, containerName)
 		return nil
 	},
 }
@@ -87,7 +93,16 @@ var commitCmd = cli.Command{
 			return fmt.Errorf("missing image name")
 		}
 		imageName := ctx.Args().Get(0)
-		container.Commit(imageName)
+		cmds.Commit(imageName)
+		return nil
+	},
+}
+
+var listCmd = cli.Command{
+	Name: "ps",
+	Usage: "list containers",
+	Action: func (ctx *cli.Context) error  {
+		cmds.ListContainers()
 		return nil
 	},
 }

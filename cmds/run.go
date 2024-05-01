@@ -1,4 +1,4 @@
-package main
+package cmds
 
 import (
 	"os"
@@ -11,7 +11,9 @@ import (
 	"github.com/wangstu/mydocker/container"
 )
 
-func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume string) {
+func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume, containerName string) {
+	containerId := container.GenerateContainerID()
+
 	parent, writePipe := container.NewParentProcess(tty, volume)
 	if parent == nil {
 		logrus.Errorf("New Parent process error")
@@ -20,6 +22,12 @@ func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume string)
 
 	if err := parent.Start(); err != nil {
 		logrus.Errorf("Run parent.Start error: %v", err)
+		return
+	}
+
+	if err := container.RecordContainerInfo(parent.Process.Pid, cmds, containerName, containerId); err != nil {
+		logrus.Errorf("record container info error: %v", err)
+		return
 	}
 
 	cgroupManager := cgroups.NewCgroupManager("mydocker", res)
@@ -31,6 +39,7 @@ func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume string)
 	if tty {
 		_ = parent.Wait()
 		container.DeleteWorkSpace("/home", volume)
+		container.DeleteContainerInfo(containerId)
 	}
 }
 

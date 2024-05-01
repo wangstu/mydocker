@@ -1,4 +1,4 @@
-package container
+package cmds
 
 import (
 	"os/exec"
