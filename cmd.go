@@ -31,7 +31,7 @@ var runCmd = cli.Command{
 			Usage: "cpuset limit. eg: --cpuset 2,4",
 		},
 		cli.StringFlag{
-			Name: "v",
+			Name:  "v",
 			Usage: "volume. eg: -v /etc/conf:/etc/conf",
 		},
 	},
@@ -66,5 +66,18 @@ var initCmd = cli.Command{
 		cmd := ctx.Args().Get(0)
 		logrus.Infof("command: %s", cmd)
 		return container.RunContainerInitProcess()
+	},
+}
+
+var commitCmd = cli.Command{
+	Name:  "commit",
+	Usage: "commit container to image",
+	Action: func(ctx *cli.Context) error {
+		if len(ctx.Args()) < 1 {
+			return fmt.Errorf("missing image name")
+		}
+		imageName := ctx.Args().Get(0)
+		container.Commit(imageName)
+		return nil
 	},
 }
