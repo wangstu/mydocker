@@ -99,10 +99,23 @@ var commitCmd = cli.Command{
 }
 
 var listCmd = cli.Command{
-	Name: "ps",
+	Name:  "ps",
 	Usage: "list containers",
-	Action: func (ctx *cli.Context) error  {
+	Action: func(ctx *cli.Context) error {
 		cmds.ListContainers()
+		return nil
+	},
+}
+
+var logCmd = cli.Command{
+	Name: "logs",
+	Usage: "print log of container",
+	Action: func(ctx *cli.Context) error {
+		if len(ctx.Args()) < 1 {
+			return fmt.Errorf("please input container id")
+		}
+		containerId := ctx.Args().Get(0)
+		cmds.GetContainerLog(containerId)
 		return nil
 	},
 }
