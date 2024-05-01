@@ -34,6 +34,10 @@ var runCmd = cli.Command{
 			Name:  "v",
 			Usage: "volume. eg: -v /etc/conf:/etc/conf",
 		},
+		cli.BoolFlag{
+			Name: "d",
+			Usage: "detach container",
+		},
 	},
 
 	/*
@@ -45,7 +49,13 @@ var runCmd = cli.Command{
 		if len(ctx.Args()) < 1 {
 			return fmt.Errorf("missing container container command")
 		}
+		
 		tty := ctx.Bool("it")
+		detach := ctx.Bool("d")
+		if tty && detach {
+			return fmt.Errorf("it and d paramater can not both provided")
+		}
+
 		resourceConf := &subsystems.ResourceConfig{
 			MemoryLimit: ctx.String("mem"),
 			CpuSet:      ctx.String("cpuset"),

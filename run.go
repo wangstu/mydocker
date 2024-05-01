@@ -28,8 +28,10 @@ func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume string)
 	_ = cgroupManager.Apply(parent.Process.Pid)
 
 	sendInitCommands(writePipe, cmds)
-	_ = parent.Wait()
-	container.DeleteWorkSpace("/home", volume)
+	if tty {
+		_ = parent.Wait()
+		container.DeleteWorkSpace("/home", volume)
+	}
 }
 
 func sendInitCommands(writePipe *os.File, cmds []string) {
