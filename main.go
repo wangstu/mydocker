@@ -20,6 +20,7 @@ func main() {
 		initCmd,
 		runCmd,
 		commitCmd,
+		listCmd,
 	}
 
 	app.Before = func(ctx *cli.Context) error {

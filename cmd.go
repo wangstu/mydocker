@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/wangstu/mydocker/cgroups/subsystems"
+	"github.com/wangstu/mydocker/cmds"
 	"github.com/wangstu/mydocker/container"
 )
 
@@ -67,7 +68,7 @@ var runCmd = cli.Command{
 		}
 		volume := ctx.String("v")
 		containerName := ctx.String("name")
-		Run(tty, ctx.Args(), resourceConf, volume, containerName)
+		cmds.Run(tty, ctx.Args(), resourceConf, volume, containerName)
 		return nil
 	},
 }
@@ -92,7 +93,16 @@ var commitCmd = cli.Command{
 			return fmt.Errorf("missing image name")
 		}
 		imageName := ctx.Args().Get(0)
-		container.Commit(imageName)
+		cmds.Commit(imageName)
+		return nil
+	},
+}
+
+var listCmd = cli.Command{
+	Name: "ps",
+	Usage: "list containers",
+	Action: func (ctx *cli.Context) error  {
+		cmds.ListContainers()
 		return nil
 	},
 }

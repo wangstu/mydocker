@@ -71,7 +71,7 @@ func RecordContainerInfo(containerPID int, cmds []string, containerName, contain
 func DeleteContainerInfo(containerId string) {
 	infoFilePath := fmt.Sprintf(InfoLocFormat, containerId)
 	if err := os.RemoveAll(infoFilePath); err != nil {
-		logrus.Errorf("remove %s error: %w", infoFilePath, err)
+		logrus.Errorf("remove %s error: %v", infoFilePath, err)
 	}
 }
 
