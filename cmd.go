@@ -138,3 +138,15 @@ var execCmd = cli.Command{
 		return nil
 	},
 }
+
+var stopCmd = cli.Command{
+	Name: "stop",
+	Usage: "stop container",
+	Action: func(ctx *cli.Context) error {
+		if len(ctx.Args()) < 1 {
+			return fmt.Errorf("missing container id")
+		}
+		cmds.StopContainer(ctx.Args().Get(0))
+		return nil
+	},
+}

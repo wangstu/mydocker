@@ -10,8 +10,7 @@ package nsenter
 #include <string.h>
 #include <fcntl.h>
 __attribute__((constructor)) void enter_namespace(void) {
-	fprintf(stdout, "enter_namespace\n");
-   // 这里的代码会在Go运行时启动前执行，它会在单线程的C上下文中运行
+    // 这里的代码会在Go运行时启动前执行，它会在单线程的C上下文中运行
 	char *mydocker_pid;
 	mydocker_pid = getenv("mydocker_pid");
 	if (mydocker_pid) {
