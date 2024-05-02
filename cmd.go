@@ -45,6 +45,10 @@ var runCmd = cli.Command{
 			Name:  "d",
 			Usage: "detach container",
 		},
+		cli.StringSliceFlag{
+			Name: "e",
+			Usage: "set environment. eg: -e key=val",
+		},
 	},
 
 	/*
@@ -70,7 +74,8 @@ var runCmd = cli.Command{
 		}
 		volume := ctx.String("v")
 		containerName := ctx.String("name")
-		cmds.Run(tty, ctx.Args().Tail(), resourceConf, volume, containerName, ctx.Args().Get(0))
+		envSlice := ctx.StringSlice("e")
+		cmds.Run(tty, ctx.Args().Tail(), envSlice, resourceConf, volume, containerName, ctx.Args().Get(0))
 		return nil
 	},
 }

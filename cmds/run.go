@@ -11,10 +11,10 @@ import (
 	"github.com/wangstu/mydocker/container"
 )
 
-func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume, containerName, imageName string) {
+func Run(tty bool, cmds, envSlice []string, res *subsystems.ResourceConfig, volume, containerName, imageName string) {
 	containerId := container.GenerateContainerID()
 
-	parent, writePipe := container.NewParentProcess(tty, volume, containerId, imageName)
+	parent, writePipe := container.NewParentProcess(tty, volume, containerId, imageName, envSlice)
 	if parent == nil {
 		logrus.Errorf("New Parent process error")
 		return
