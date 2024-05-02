@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -27,7 +28,7 @@ func StopContainer(containerId string) {
 	}
 
 	// send SIGTERM to container
-	if err = syscall.Kill(pidInt, syscall.SIGTERM); err != nil {
+	if err = syscall.Kill(pidInt, syscall.SIGTERM); err != nil && !errors.Is(err, syscall.ESRCH) {
 		logrus.Errorf("stop container %s error: %v", containerId, err)
 		return
 	}
