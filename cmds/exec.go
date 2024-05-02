@@ -37,6 +37,10 @@ func ExecContainer(containerId string, cmds []string) {
 	os.Setenv(EnvExecPid, pid)
 	os.Setenv(EnvExecCmd, cmdStr)
 
+	// 把指定PID进程的环境变量传递给新启动的进程，实现通过exec命令也能查询到容器的环境变量
+	containerEnv := getEnvsByPid(pid)
+	cmd.Env = append(os.Environ(), containerEnv...)
+
 	if err = cmd.Run(); err != nil {
 		logrus.Errorf("exec container %s error: %v", containerId, err)
 	}
@@ -54,4 +58,15 @@ func getPidByContainerId(containerId string) (string, error) {
 		return "", err
 	}
 	return containerInfo.Pid, nil
+}
+
+func getEnvsByPid(pid string) []string {
+	p := fmt.Sprintf("/proc/%s/environ", pid)
+	contentBytes, err := os.ReadFile(p)
+	if err != nil {
+		logrus.Errorf("read file %s error: %v", p, err)
+		return nil
+	}
+	envs := strings.Split(string(contentBytes), "\u0000")
+	return envs
 }
