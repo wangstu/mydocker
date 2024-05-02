@@ -1,9 +1,6 @@
 package cmds
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/sirupsen/logrus"
 	"github.com/wangstu/mydocker/container"
 )
@@ -17,10 +14,11 @@ func RemoveContainer(containerId string, force bool) {
 
 	switch containerInfo.Status {
 	case container.STOP:
-		folder := fmt.Sprintf(container.InfoLocFormat, containerId)
-		if err = os.RemoveAll(folder); err != nil {
-			logrus.Errorf("remove container error: %v", err)
+		if err = container.DeleteContainerInfo(containerId); err != nil {
+			logrus.Errorf("remove container %s config error: %v", containerId, err)
+			return
 		}
+		container.DeleteWorkSpace(containerId, containerInfo.Volume)
 	case container.RUNNING:
 		if !force {
 			logrus.Errorf("can't remove running container %s, please stop container before attempting removal or force to remove", containerId)

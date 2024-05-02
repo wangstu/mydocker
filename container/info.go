@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/wangstu/mydocker/constant"
 )
 
@@ -31,9 +30,10 @@ type Info struct {
 	Command    string `json:"command"`
 	CreateTime string `json:"createTime"`
 	Status     string `json:"status"`
+	Volume     string `json:"volume"`
 }
 
-func RecordContainerInfo(containerPID int, cmds []string, containerName, containerId string) error {
+func RecordContainerInfo(containerPID int, cmds []string, containerName, containerId, volume string) error {
 	if containerName == "" {
 		containerName = containerId
 	}
@@ -45,6 +45,7 @@ func RecordContainerInfo(containerPID int, cmds []string, containerName, contain
 		CreateTime: time.Now().Format("2006-01-02 15:04:05"),
 		Status:     RUNNING,
 		Name:       containerName,
+		Volume:     volume,
 	}
 	jsonBytes, err := json.MarshalIndent(containerInfo, "", "  ")
 	if err != nil {
@@ -68,11 +69,12 @@ func RecordContainerInfo(containerPID int, cmds []string, containerName, contain
 	return nil
 }
 
-func DeleteContainerInfo(containerId string) {
+func DeleteContainerInfo(containerId string) error {
 	infoFilePath := fmt.Sprintf(InfoLocFormat, containerId)
 	if err := os.RemoveAll(infoFilePath); err != nil {
-		logrus.Errorf("remove %s error: %v", infoFilePath, err)
+		return fmt.Errorf("remove %s error: %w", infoFilePath, err)
 	}
+	return nil
 }
 
 func GenerateContainerID() string {

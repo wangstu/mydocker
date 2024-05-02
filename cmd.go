@@ -14,7 +14,8 @@ import (
 
 var runCmd = cli.Command{
 	Name:  "run",
-	Usage: `Create a container with namespace and cgrups limit.`,
+	Usage: `Create a container with namespace and cgrups limit.
+			mydocker run -d -name [containerName] [imageName] [command]`,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "name",
@@ -69,7 +70,7 @@ var runCmd = cli.Command{
 		}
 		volume := ctx.String("v")
 		containerName := ctx.String("name")
-		cmds.Run(tty, ctx.Args(), resourceConf, volume, containerName)
+		cmds.Run(tty, ctx.Args().Tail(), resourceConf, volume, containerName, ctx.Args().Get(0))
 		return nil
 	},
 }
@@ -88,14 +89,14 @@ var initCmd = cli.Command{
 
 var commitCmd = cli.Command{
 	Name:  "commit",
-	Usage: "commit container to image",
+	Usage: "commit container to image. eg: mydocker commit iwue8390he myimage",
 	Action: func(ctx *cli.Context) error {
-		if len(ctx.Args()) < 1 {
-			return fmt.Errorf("missing image name")
+		if len(ctx.Args()) < 2 {
+			return fmt.Errorf("missing container id and image name")
 		}
-		imageName := ctx.Args().Get(0)
-		cmds.Commit(imageName)
-		return nil
+		containerId := ctx.Args().Get(0)
+		imageName := ctx.Args().Get(1)
+		return cmds.Commit(containerId, imageName)
 	},
 }
 

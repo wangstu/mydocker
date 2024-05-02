@@ -11,10 +11,10 @@ import (
 	"github.com/wangstu/mydocker/container"
 )
 
-func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume, containerName string) {
+func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume, containerName, imageName string) {
 	containerId := container.GenerateContainerID()
 
-	parent, writePipe := container.NewParentProcess(tty, volume, containerId)
+	parent, writePipe := container.NewParentProcess(tty, volume, containerId, imageName)
 	if parent == nil {
 		logrus.Errorf("New Parent process error")
 		return
@@ -25,7 +25,7 @@ func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume, contai
 		return
 	}
 
-	if err := container.RecordContainerInfo(parent.Process.Pid, cmds, containerName, containerId); err != nil {
+	if err := container.RecordContainerInfo(parent.Process.Pid, cmds, containerName, containerId, volume); err != nil {
 		logrus.Errorf("record container info error: %v", err)
 		return
 	}
@@ -38,7 +38,7 @@ func Run(tty bool, cmds []string, res *subsystems.ResourceConfig, volume, contai
 	sendInitCommands(writePipe, cmds)
 	if tty {
 		_ = parent.Wait()
-		container.DeleteWorkSpace("/home", volume)
+		container.DeleteWorkSpace(containerId, volume)
 		container.DeleteContainerInfo(containerId)
 	}
 }
