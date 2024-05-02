@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -108,7 +109,7 @@ var listCmd = cli.Command{
 }
 
 var logCmd = cli.Command{
-	Name: "logs",
+	Name:  "logs",
 	Usage: "print log of container",
 	Action: func(ctx *cli.Context) error {
 		if len(ctx.Args()) < 1 {
@@ -116,6 +117,24 @@ var logCmd = cli.Command{
 		}
 		containerId := ctx.Args().Get(0)
 		cmds.GetContainerLog(containerId)
+		return nil
+	},
+}
+
+var execCmd = cli.Command{
+	Name:  "exec",
+	Usage: "exec a command into a container",
+	Action: func(ctx *cli.Context) error {
+		if os.Getenv(cmds.EnvExecPid) != "" {
+			logrus.Infof("pid callback pid: %v", os.Getgid())
+			return nil
+		}
+		if len(ctx.Args()) < 2 {
+			return fmt.Errorf("missing container name or command")
+		}
+		containerId := ctx.Args().Get(0)
+		commands := ctx.Args().Tail()
+		cmds.ExecContainer(containerId, commands)
 		return nil
 	},
 }
