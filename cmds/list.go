@@ -30,15 +30,16 @@ func ListContainers() {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 12, 1, 3, ' ', 0)
-	if _, err = fmt.Fprint(w, "ID\tNAME\tPID\tSTATUS\tCOMMAND\tCREATED\n"); err != nil {
+	if _, err = fmt.Fprint(w, "ID\tNAME\tPID\tIP\tSTATUS\tCOMMAND\tCREATED\n"); err != nil {
 		logrus.Errorf("fprint error: %v", err)
 	}
 
 	for _, item := range containerInfos {
-		if _, err = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
+		if _, err = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			item.Id,
 			item.Name,
 			item.Pid,
+			item.IP,
 			item.Status,
 			item.Command,
 			item.CreateTime); err != nil {

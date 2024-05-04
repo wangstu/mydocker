@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -9,9 +10,11 @@ import (
 	"github.com/wangstu/mydocker/cgroups"
 	"github.com/wangstu/mydocker/cgroups/subsystems"
 	"github.com/wangstu/mydocker/container"
+	"github.com/wangstu/mydocker/network"
 )
 
-func Run(tty bool, cmds, envSlice []string, res *subsystems.ResourceConfig, volume, containerName, imageName string) {
+func Run(tty bool, cmds, envSlice []string, res *subsystems.ResourceConfig,
+	volume, containerName, imageName, networkName string, portMapping []string) {
 	containerId := container.GenerateContainerID()
 
 	parent, writePipe := container.NewParentProcess(tty, volume, containerId, imageName, envSlice)
@@ -25,21 +28,44 @@ func Run(tty bool, cmds, envSlice []string, res *subsystems.ResourceConfig, volu
 		return
 	}
 
-	if err := container.RecordContainerInfo(parent.Process.Pid, cmds, containerName, containerId, volume); err != nil {
-		logrus.Errorf("record container info error: %v", err)
-		return
-	}
-
 	cgroupManager := cgroups.NewCgroupManager("mydocker", res)
 	defer cgroupManager.Destory()
 	_ = cgroupManager.Set()
 	_ = cgroupManager.Apply(parent.Process.Pid)
+
+	var containerIP string
+	if networkName != "" {
+		// config container network
+		containerInfo := &container.Info{
+			Id:          containerId,
+			Pid:         strconv.Itoa(parent.Process.Pid),
+			Name:        containerName,
+			PortMapping: portMapping,
+		}
+		if ip, err := network.Connect(networkName, containerInfo); err != nil {
+			logrus.Errorf("connect network error: %v", err)
+			return
+		} else {
+			containerIP = ip.String()
+			logrus.Infof("configured network, ip: %v", ip)
+		}
+	}
+
+	containerInfo, err := container.RecordContainerInfo(parent.Process.Pid, cmds,
+		containerName, containerId, volume, networkName, containerIP, portMapping)
+	if err != nil {
+		logrus.Errorf("record container info error: %v", err)
+		return
+	}
 
 	sendInitCommands(writePipe, cmds)
 	if tty {
 		_ = parent.Wait()
 		container.DeleteWorkSpace(containerId, volume)
 		container.DeleteContainerInfo(containerId)
+		if networkName != "" {
+			network.Disconnect(containerInfo)
+		}
 	}
 }
 

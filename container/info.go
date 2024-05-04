@@ -24,49 +24,56 @@ const (
 )
 
 type Info struct {
-	Pid        string `json:"pid"`
-	Id         string `json:"id"`
-	Name       string `json:"name"`
-	Command    string `json:"command"`
-	CreateTime string `json:"createTime"`
-	Status     string `json:"status"`
-	Volume     string `json:"volume"`
+	Pid         string   `json:"pid"`
+	Id          string   `json:"id"`
+	Name        string   `json:"name"`
+	Command     string   `json:"command"`
+	CreateTime  string   `json:"createTime"`
+	Status      string   `json:"status"`
+	Volume      string   `json:"volume"`
+	NetworkName string   `json:"networkName"`
+	IP          string   `json:"ip"`
+	PortMapping []string `json:"portMapping"`
 }
 
-func RecordContainerInfo(containerPID int, cmds []string, containerName, containerId, volume string) error {
+func RecordContainerInfo(containerPID int, cmds []string,
+	containerName, containerId, volume, networkName, ip string, portMapping []string) (*Info, error) {
 	if containerName == "" {
 		containerName = containerId
 	}
 	command := strings.Join(cmds, " ")
 	containerInfo := &Info{
-		Id:         containerId,
-		Pid:        strconv.Itoa(containerPID),
-		Command:    command,
-		CreateTime: time.Now().Format("2006-01-02 15:04:05"),
-		Status:     RUNNING,
-		Name:       containerName,
-		Volume:     volume,
+		Name:        containerName,
+		Id:          containerId,
+		Pid:         strconv.Itoa(containerPID),
+		Command:     command,
+		CreateTime:  time.Now().Format("2006-01-02 15:04:05"),
+		Status:      RUNNING,
+		Volume:      volume,
+		NetworkName: networkName,
+		IP:          ip,
+		PortMapping: portMapping,
 	}
 	jsonBytes, err := json.MarshalIndent(containerInfo, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshal container info error: %w", err)
+		return containerInfo, fmt.Errorf("marshal container info error: %w", err)
 	}
 	jsonStr := string(jsonBytes)
 
 	infoFolder := fmt.Sprintf(InfoLocFormat, containerId)
 	if err := os.MkdirAll(infoFolder, constant.Perm0644); err != nil && !os.IsExist(err) {
-		return fmt.Errorf("mkdir %s error: %w", infoFolder, err)
+		return containerInfo, fmt.Errorf("mkdir %s error: %w", infoFolder, err)
 	}
 
 	infoFilePath := path.Join(infoFolder, ConfigName)
 	file, err := os.Create(infoFilePath)
 	if err != nil {
-		return fmt.Errorf("create file %s error: %w", infoFilePath, err)
+		return containerInfo, fmt.Errorf("create file %s error: %w", infoFilePath, err)
 	}
 	if _, err = file.WriteString(jsonStr); err != nil {
-		return fmt.Errorf("write container info to file %s error: %w", infoFilePath, err)
+		return containerInfo, fmt.Errorf("write container info to file %s error: %w", infoFilePath, err)
 	}
-	return nil
+	return containerInfo, nil
 }
 
 func DeleteContainerInfo(containerId string) error {
