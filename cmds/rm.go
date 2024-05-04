@@ -3,6 +3,7 @@ package cmds
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/wangstu/mydocker/container"
+	"github.com/wangstu/mydocker/network"
 )
 
 func RemoveContainer(containerId string, force bool) {
@@ -19,6 +20,12 @@ func RemoveContainer(containerId string, force bool) {
 			return
 		}
 		container.DeleteWorkSpace(containerId, containerInfo.Volume)
+		if containerInfo.NetworkName != "" {
+			if err = network.Disconnect(containerInfo); err != nil {
+				logrus.Errorf("remove container %s's network config error: %v", containerId, err)
+				return
+			}
+		}
 	case container.RUNNING:
 		if !force {
 			logrus.Errorf("can't remove running container %s, please stop container before attempting removal or force to remove", containerId)
